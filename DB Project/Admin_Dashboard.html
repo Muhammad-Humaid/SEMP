@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="icon" href="COMSATS_new_logo.jpg" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* BASE COLORS (LIGHT THEME DEFAULT) */
+        :root {
+            --primary-blue: #003399; 
+            --darker-blue: #002080;
+            --page-bg: #f0f4ff; 
+            --card-bg: #ffffff;
+            --secondary-light: #e4e8ff; 
+            --text-color: #333333;
+            --sidebar-text-color: #ffffff; /* White text on blue sidebar */
+            --table-header-bg: #e4e8ff;
+            --table-row-hover: #f7faff;
+            --success-green: #4CAF50;
+            --reject-red: #f44336;
+            --shadow-color: rgba(0,0,0,0.1);
+        }
+
+        /* DARK THEME OVERRIDES */
+        html.dark-theme {
+            --primary-blue: #79a6ff; 
+            --darker-blue: #5e84cc;
+            --page-bg: #1c1c1c; 
+            --card-bg: #282828;
+            --secondary-light: #3a3a3a; 
+            --text-color: #dddddd;
+            --sidebar-text-color: #ffffff;
+            --table-header-bg: #333333;
+            --table-row-hover: #383838;
+            --shadow-color: rgba(255,255,255,0.05);
+            /* Keep success/reject red the same or slightly adjusted for clarity */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--page-bg);
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px var(--shadow-color);
+        }
+
+        .sidebar h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 0 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .sidebar a {
+            padding: 15px 20px;
+            text-decoration: none;
+            color: var(--sidebar-text-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            transition: background-color 0.2s;
+            border-left: 5px solid transparent;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            background-color: var(--darker-blue);
+            border-left: 5px solid var(--success-green);
+        }
+
+        .main-content {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 10px 0;
+            border-bottom: 3px solid var(--primary-blue);
+        }
+        
+        h1 {
+            color: var(--primary-blue);
+            text-align: left;
+            margin: 0;
+            font-size: 28px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        /* Theme Toggle Button */
+        #theme-toggle {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            padding: 10px 15px;
+            border: 1px solid var(--secondary-light);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            font-size: 18px;
+        }
+        #theme-toggle:hover {
+            background-color: var(--table-row-hover);
+        }
+        
+        .logout-btn {
+            background-color: var(--reject-red);
+            color: var(--white);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .content-view {
+            display: none;
+        }
+
+        .content-view.active {
+            display: block;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 4fr;
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+        
+        .budget-card {
+            align-self: start; 
+        }
+        
+        .card h2 {
+            color: var(--darker-blue);
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--secondary-light);
+            padding-bottom: 10px;
+        }
+        
+        .budget-card p {
+            font-size: 16px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        
+        #remaining-budget, #allocated-budget {
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--secondary-light);
+            font-size: 14px;
+        }
+
+        th {
+            background-color: var(--table-header-bg);
+            color: var(--primary-blue);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        tbody tr:hover {
+            background-color: var(--table-row-hover);
+        }
+
+        .action-btn {
+            padding: 8px 14px;
+            margin-right: 5px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .accept-btn {
+            background-color: var(--success-green);
+            color: white;
+        }
+
+        .reject-btn {
+            background-color: var(--reject-red);
+            color: white;
+        }
+
+        .progress-bar-container {
+            height: 18px;
+            background-color: var(--secondary-light);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 15px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%; 
+            background-color: var(--primary-blue);
+            transition: width 0.6s ease-in-out;
+        }
+
+        .small-text {
+            font-size: 0.9em;
+            color: var(--text-color);
+            opacity: 0.7;
+            margin-top: 8px;
+        }
+        
+        .rejected-proposal {
+            background-color: #fcebeb;
+        }
+        
+        html.dark-theme .rejected-proposal {
+            background-color: #581511; 
+        }
+
+        .budget-update-group {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--secondary-light);
+        }
+        .budget-update-group input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            border: 1px solid var(--secondary-light);
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+        .budget-update-group button {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+        .budget-update-group button:hover {
+            background-color: var(--darker-blue);
+        }
+        
+        .budget-update-group hr {
+            border: 0;
+            border-top: 1px solid var(--secondary-light);
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="sidebar">
+            <h3>Admin Panel</h3>
+            <a href="#" class="nav-link active" data-view="pending-requests" onclick="showView('pending-requests', this)">
+                <i class="fas fa-list-alt"></i> Pending Requests
+            </a>
+            <a href="#" class="nav-link" data-view="upcoming-events" onclick="showView('upcoming-events', this)">
+                <i class="fas fa-calendar-check"></i> Upcoming Events
+            </a>
+            <a href="#" class="nav-link" data-view="past-events" onclick="showView('past-events', this)">
+                <i class="fas fa-history"></i> Past Events
+            </a>
+        </div>
+        
+        <div class="main-content">
+            <div class="header-container">
+                <h1>Event Management Dashboard</h1>
+                <div class="header-actions">
+                    <button id="theme-toggle" onclick="toggleTheme()">
+                        <i class="fas fa-moon"></i> 
+                    </button>
+                    <button class="logout-btn" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+
+            <div id="pending-requests" class="content-view active">
+                <div class="dashboard-grid">
+                    
+                    <div class="budget-card card">
+                        <h2>Monthly Budget Status</h2>
+                        <p>Total Budget: PKR <span id="total-budget">50,000.00</span></p>
+                        <p>Remaining: PKR <span id="remaining-budget">50,000.00</span></p>
+                        
+                        <div class="progress-bar-container">
+                            <div id="budget-progress" class="progress-bar"></div>
+                        </div>
+                        
+                        <p class="small-text">Allocated: PKR <span id="allocated-budget">0.00</span></p>
+
+                        <div class="budget-update-group">
+                            <h4>Update Total Budget (PIN required)</h4>
+                            <input type="number" id="new-budget-amount" placeholder="Enter new budget amount (PKR)" required>
+                            <input type="password" id="budget-pin" placeholder="Enter PIN" required>
+                            <button onclick="updateTotalBudget()"><i class="fas fa-edit"></i> Set New Budget</button>
+                            
+                            <hr>
+
+                            <h4>Reset Budget PIN</h4>
+                            <input type="password" id="admin-password" placeholder="Enter Admin Password" required>
+                            <button onclick="resetBudgetPin()"><i class="fas fa-key"></i> Reset PIN</button>
+                            <p id="reset-status" style="font-size: 13px; margin-top: 8px; font-weight: bold;"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="table-card card">
+                        <h2>Pending Event Requests</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Event Name</th>
+                                    <th>Society Name</th>
+                                    <th>Requested Day</th>
+                                    <th>Budget</th>
+                                    <th>Remarks</th>
+                                    <th>Action</th> 
+                                </tr>
+                            </thead>
+                            <tbody id="request-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="upcoming-events" class="content-view">
+                <div class="table-card card">
+                    <h2>Upcoming (Approved) Events</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Event Name</th>
+                                <th>Society</th>
+                                <th>Date & Time</th>
+                                <th>Venue</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="upcoming-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="past-events" class="content-view">
+                
+                <div class="table-card card" style="margin-bottom: 25px;">
+                    <h2>Completed Events</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Event Name</th>
+                                <th>Society</th>
+                                <th>Date</th>
+                                <th>Budget</th>
+                                <th>Report / Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="completed-events-table-body">
+                            <tr>
+                                <td>Completed</td>
+                                <td>Hackathon 2024</td>
+                                <td>CS Club</td>
+                                <td>2024-11-20</td>
+                                <td>PKR 15,000.00</td>
+                                <td>Successful Event, Report Filed.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-card card">
+                    <h2>Rejected Proposals</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Event Name</th>
+                                <th>Society</th>
+                                <th>Date</th>
+                                <th>Budget</th>
+                                <th>Rejection Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rejected-proposals-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const LOGIN_URL = "Admin_Login.html";
+        const ADMIN_PASSWORD = "admin122";
+        const DEFAULT_BUDGET_PIN = "1234";
+        const BUDGET_PIN_KEY = 'budgetPin';
+        const TOTAL_BUDGET_KEY = 'totalMonthlyBudget';
+        const PROPOSALS_KEY = 'adminProposals';
+        const APPROVED_EVENTS_KEY = 'approvedEvents';
+        const REJECTED_EVENTS_KEY = 'rejectedEvents';
+        const THEME_KEY = 'themePreference';
+
+        let allocatedBudget = 0;
+        let totalBudget = 50000;
+        const htmlElement = document.documentElement;
+        const themeToggleBtn = document.getElementById('theme-toggle');
+
+        function getPin() {
+            const storedPin = localStorage.getItem(BUDGET_PIN_KEY);
+            return storedPin ? storedPin : DEFAULT_BUDGET_PIN;
+        }
+
+        function savePin(newPin) {
+            localStorage.setItem(BUDGET_PIN_KEY, newPin);
+        }
+
+        function getBudget() {
+            const storedBudget = localStorage.getItem(TOTAL_BUDGET_KEY);
+            return storedBudget ? parseFloat(storedBudget) : 50000;
+        }
+
+        function saveBudget(amount) {
+            localStorage.setItem(TOTAL_BUDGET_KEY, amount.toFixed(2));
+            totalBudget = amount;
+        }
+
+        function getProposals() {
+            let proposals = localStorage.getItem(PROPOSALS_KEY);
+            return proposals ? JSON.parse(proposals) : [];
+        }
+
+        function saveProposals(proposals) {
+            localStorage.setItem(PROPOSALS_KEY, JSON.stringify(proposals));
+        }
+
+        function getApprovedEvents() {
+            let approved = localStorage.getItem(APPROVED_EVENTS_KEY);
+            return approved ? JSON.parse(approved) : [];
+        }
+
+        function saveApprovedEvents(approved) {
+            localStorage.setItem(APPROVED_EVENTS_KEY, JSON.stringify(approved));
+        }
+        
+        function getRejectedEvents() {
+            let rejected = localStorage.getItem(REJECTED_EVENTS_KEY);
+            return rejected ? JSON.parse(rejected) : [];
+        }
+
+        function saveRejectedEvents(rejected) {
+            localStorage.setItem(REJECTED_EVENTS_KEY, JSON.stringify(rejected));
+        }
+
+        function formatCurrency(amount) {
+            return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function updateBudgetDisplay() {
+            const remainingBudget = totalBudget - allocatedBudget;
+            
+            const formattedRemaining = formatCurrency(remainingBudget);
+            const formattedAllocated = formatCurrency(allocatedBudget);
+            const formattedTotal = formatCurrency(totalBudget);
+
+            document.getElementById('remaining-budget').textContent = formattedRemaining;
+            document.getElementById('allocated-budget').textContent = formattedAllocated;
+            document.getElementById('total-budget').textContent = formattedTotal;
+            
+            const percentage = (allocatedBudget / totalBudget) * 100;
+            document.getElementById('budget-progress').style.width = Math.min(percentage, 100) + '%'; 
+        }
+        
+        function updateTotalBudget() {
+            const newAmount = parseFloat(document.getElementById('new-budget-amount').value);
+            const pinAttempt = document.getElementById('budget-pin').value;
+            const currentPin = getPin();
+
+            if (isNaN(newAmount) || newAmount <= 0) {
+                return;
+            }
+
+            if (pinAttempt !== currentPin) {
+                document.getElementById('budget-pin').value = '';
+                return;
+            }
+
+            saveBudget(newAmount);
+            document.getElementById('new-budget-amount').value = '';
+            document.getElementById('budget-pin').value = '';
+            updateBudgetDisplay();
+        }
+
+        function resetBudgetPin() {
+            const adminPasswordAttempt = document.getElementById('admin-password').value;
+            const statusElement = document.getElementById('reset-status');
+
+            if (adminPasswordAttempt === ADMIN_PASSWORD) {
+                const newPin = prompt("Enter a new 4-digit budget PIN:");
+                
+                if (newPin && newPin.length >= 4 && !isNaN(newPin)) {
+                    savePin(newPin);
+                    statusElement.textContent = `Successfully resetted the PIN!`;
+                    statusElement.style.color = 'var(--success-green)';
+                } else {
+                    statusElement.textContent = 'Reset failed. PIN must be a 4+ digit number.';
+                    statusElement.style.color = 'var(--reject-red)';
+                }
+
+            } else {
+                statusElement.textContent = 'Incorrect password/pin';
+                statusElement.style.color = 'var(--reject-red)';
+            }
+            document.getElementById('admin-password').value = '';
+        }
+
+
+        function handleAccept(proposalId) {
+            let proposals = getProposals();
+            const index = proposals.findIndex(p => p.id === proposalId);
+            
+            if (index === -1) return;
+
+            const proposal = proposals[index];
+
+            const approvedEvents = getApprovedEvents();
+            approvedEvents.push(proposal);
+            saveApprovedEvents(approvedEvents);
+            
+            allocatedBudget += proposal.budget;
+            updateBudgetDisplay();
+
+            proposals.splice(index, 1);
+            saveProposals(proposals);
+            
+            renderTables();
+        }
+
+        function handleReject(proposalId) {
+            const rejectionRemarks = prompt("Enter remarks for rejecting this proposal:");
+            
+            if (rejectionRemarks === null || rejectionRemarks.trim() === "") {
+                return; 
+            }
+
+            let proposals = getProposals();
+            const index = proposals.findIndex(p => p.id === proposalId);
+            
+            if (index === -1) return;
+
+            const rejectedProposal = proposals[index];
+            rejectedProposal.status = 'Rejected';
+            rejectedProposal.rejectionReason = rejectionRemarks;
+
+            const rejectedEvents = getRejectedEvents();
+            rejectedEvents.push(rejectedProposal);
+            saveRejectedEvents(rejectedEvents);
+
+            proposals.splice(index, 1);
+            saveProposals(proposals);
+            
+            renderTables();
+        }
+    
+        function renderPendingTable() {
+            const proposals = getProposals();
+            const tableBody = document.getElementById('request-table-body');
+            tableBody.innerHTML = ''; 
+            
+            if (proposals.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--primary-blue); font-weight: 600;">No pending requests at this time.</td></tr>';
+                return;
+            }
+
+            proposals.forEach(request => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${request.eventName}</td>
+                    <td>${request.societyName}</td>
+                    <td>${request.requestedDay}</td>
+                    <td>PKR ${formatCurrency(request.budget)}</td>
+                    <td>${request.proposalDetails.substring(0, 50)}...</td>
+                    <td>
+                        <button class="action-btn accept-btn" onclick="handleAccept(${request.id})">Accept</button>
+                        <button class="action-btn reject-btn" onclick="handleReject(${request.id})">Reject</button> 
+                    </td>
+                `;
+            });
+        }
+        
+        function renderUpcomingTable() {
+            const approvedEvents = getApprovedEvents();
+            const tableBody = document.getElementById('upcoming-table-body');
+            tableBody.innerHTML = ''; 
+            
+            if (approvedEvents.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No events have been approved yet.</td></tr>';
+                return;
+            }
+
+            approvedEvents.forEach(event => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${event.eventName}</td>
+                    <td>${event.societyName}</td>
+                    <td>${event.requestedDay} (${event.timeSlot})</td>
+                    <td>${event.venue}</td>
+                    <td>${event.proposalDetails.substring(0, 50)}...</td>
+                `;
+            });
+        }
+        
+        function renderPastEventsTable() {
+            const rejectedEvents = getRejectedEvents();
+            const rejectedTableBody = document.getElementById('rejected-proposals-table-body');
+            const completedTableBody = document.getElementById('completed-events-table-body');
+
+            rejectedTableBody.innerHTML = '';
+            
+            completedTableBody.innerHTML = `
+                <tr>
+                    <td>Completed</td>
+                    <td>Hackathon 2024</td>
+                    <td>CS Club</td>
+                    <td>2024-11-20</td>
+                    <td>PKR ${formatCurrency(15000)}</td>
+                    <td>Successful Event, Report Filed.</td>
+                </tr>
+            `;
+
+            if (rejectedEvents.length === 0) {
+                return;
+            }
+
+            rejectedEvents.forEach(event => {
+                const row = rejectedTableBody.insertRow();
+                row.classList.add('rejected-proposal'); 
+                row.innerHTML = `
+                    <td>Rejected</td>
+                    <td>${event.eventName}</td>
+                    <td>${event.societyName}</td>
+                    <td>${event.requestedDay}</td>
+                    <td>PKR ${formatCurrency(event.budget)}</td>
+                    <td>${event.rejectionReason}</td>
+                `;
+            });
+        }
+
+        function renderTables() {
+            renderPendingTable();
+            renderUpcomingTable();
+            renderPastEventsTable();
+        }
+
+        function showView(viewId, element) {
+            document.querySelectorAll('.content-view').forEach(view => {
+                view.classList.remove('active');
+            });
+            document.getElementById(viewId).classList.add('active');
+            
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            element.classList.add('active');
+            
+            // Re-render necessary tables when switching views
+            renderTables();
+        }
+        
+        function handleLogout() {
+            window.location.href = LOGIN_URL; 
+        }
+        
+        function updateThemeIcon(isDark) {
+            themeToggleBtn.innerHTML = isDark 
+                ? '<i class="fas fa-sun"></i>' 
+                : '<i class="fas fa-moon"></i>';
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem(THEME_KEY);
+            if (savedTheme === 'dark') {
+                htmlElement.classList.add('dark-theme');
+                updateThemeIcon(true);
+            } else {
+                htmlElement.classList.remove('dark-theme');
+                updateThemeIcon(false);
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = htmlElement.classList.toggle('dark-theme');
+            localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+            updateThemeIcon(isDark);
+            
+            // Re-render the tables to ensure table background colors update correctly
+            renderTables();
+            updateBudgetDisplay(); 
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTheme();
+            
+            totalBudget = getBudget();
+            
+            const approvedEvents = getApprovedEvents();
+            allocatedBudget = approvedEvents.reduce((sum, event) => sum + event.budget, 0);
+            
+            updateBudgetDisplay();
+            renderTables();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>COMSATS Faculty Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" href="COMSATS_new_logo.jpg" type="image/png">
+    
+    <style>
+        /* Base Colors from COMSATS Login Theme */
+        :root {
+            --primary-blue: #003399; 
+            --darker-blue: #002080;
+            --light-bg: #f0f4ff; 
+            --secondary-light: #e4e8ff; 
+            --white: #ffffff;
+            --shadow-color: rgba(0,0,0,0.15);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-box {
+            width: 360px;
+            background: var(--white);
+            padding: 40px 30px; 
+            border-radius: 12px;
+            box-shadow: 0 10px 30px var(--shadow-color); 
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary-blue);
+            margin-bottom: 30px; 
+            font-size: 24px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        /* Input Group for Icon Placement (added for better design) */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-blue);
+            font-size: 16px;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            padding-left: 45px;
+            margin-top: 6px;
+            margin-bottom: 15px;
+            border: 1px solid #aaa;
+            border-radius: 6px;
+            box-sizing: border-box; 
+            transition: border-color 0.3s;
+        }
+        
+        /* Remove extra padding for captcha input, which is handled separately */
+        #captchaInput {
+            padding-left: 10px; 
+        }
+
+        input:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+        }
+
+        .captcha-box {
+            display: flex;
+            align-items: center;
+        }
+
+        .captcha {
+            flex: 1;
+            padding: 10px;
+            background: var(--secondary-light);
+            font-weight: bold;
+            font-size: 18px;
+            letter-spacing: 3px;
+            text-align: center;
+            border-radius: 6px;
+            user-select: none;
+        }
+
+        .refresh {
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 24px;
+            color: var(--primary-blue);
+            transition: transform 0.3s;
+        }
+        
+        .refresh:hover {
+             transform: rotate(360deg);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px; 
+            background: var(--primary-blue);
+            color: white;
+            font-size: 18px; 
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background: var(--darker-blue);
+        }
+
+        .links {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 14px;
+        }
+        
+        .links p {
+            margin: 5px 0;
+        }
+
+        .links a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .links a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: 0;
+            height: 1px;
+            background-color: #eee;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-box">
+    <h2>Faculty/Admin Login</h2>
+
+    <label>Faculty Email</label>
+    <div class="input-group">
+        <i class="fas fa-envelope"></i>
+        <input type="email" id="facultyEmail" placeholder="facultyname@cuilahore.edu.pk">
+    </div>
+
+    <label>Password</label>
+    <div class="input-group">
+        <i class="fas fa-lock"></i>
+        <input type="password" id="password" placeholder="Enter your password">
+    </div>
+
+    <label>Captcha</label>
+    <div class="captcha-box">
+        <div id="captcha" class="captcha">AB123</div>
+        <div class="refresh" onclick="generateCaptcha()" title="Refresh Captcha">
+            <i class="fas fa-redo"></i>
+        </div>
+    </div>
+
+    <input type="text" id="captchaInput" placeholder="Enter captcha">
+
+    <button onclick="login()">Sign In</button>
+
+    <div class="links">
+        <p><a href="https://faculty.comsats.edu.pk/Home/Forgot" target="_blank">Reset Password</a></p>
+        <hr>
+        <p>Are you a student? <a href="Student_Login.html">Click here for Student Login</a></p>
+        <p>Are you a Society Representative? <a href="Society_Rep.html">Click here for Society Representative Login</a></p>
+    </div>
+</div>
+
+<script>
+    const DASHBOARD_URL = "Admin_Dashboard.html";
+
+    function generateCaptcha(){
+        let chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        let code = "";
+        for(let i = 0; i < 5; i++){
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        document.getElementById("captcha").innerText = code;
+        document.getElementById("captchaInput").value = "";
+    }
+
+    function login(){
+        let captchaText = document.getElementById("captcha").innerText.trim();
+        let userInput = document.getElementById("captchaInput").value.trim();
+        
+        const email = document.getElementById("facultyEmail").value;
+        const password = document.getElementById("password").value;
+        
+        if (!email || !password) {
+             alert("Please enter your email and password.");
+             return;
+        }
+
+
+        if(userInput !== captchaText){
+            alert("Incorrect Captcha!");
+            generateCaptcha();
+            return;
+        }
+
+  
+        window.location.href = 'Admin_Dashboard.html'; 
+    }
+
+    generateCaptcha();
+</script>
+
+</body>
+</html>

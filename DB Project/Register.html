@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="icon" href="COMSATS_new_logo.jpg" type="image/png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-blue: #003399; 
+            --darker-blue: #002080;
+            --light-bg: #f0f4ff; 
+            --secondary-light: #e4e8ff; 
+            --white: #ffffff;
+            --register-green: #4CAF50;
+            --cancel-red: #f44336;
+            --shadow-color: rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            margin: 0;
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .form-container {
+            width: 500px;
+            background: var(--white);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+        }
+
+        .form-container h2 {
+            text-align: center;
+            color: var(--primary-blue);
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--secondary-light);
+            padding-bottom: 10px;
+            font-size: 24px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+            margin-top: 15px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-blue);
+            font-size: 16px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        .upload-box {
+            width: 100%;
+            padding: 12px 12px 12px 45px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        
+        .upload-box {
+            padding: 15px 15px 15px 45px;
+            cursor: pointer;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #777;
+            border-style: dashed;
+            font-size: 16px;
+        }
+        
+        input[type="file"] {
+            display: none; 
+        }
+
+        input:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 51, 153, 0.2);
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .submit-btn, .cancel-btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .submit-btn {
+            background: var(--register-green);
+            color: var(--white);
+        }
+        
+        .submit-btn:hover {
+            background: #388e3c;
+        }
+
+        .cancel-btn {
+            background: var(--cancel-red);
+            color: var(--white);
+        }
+
+        .cancel-btn:hover {
+            background: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>Event Registration</h2>
+    <form id="registrationForm" onsubmit="event.preventDefault(); handleSubmit();">
+        
+        <label for="fullName">Full Name</label>
+        <div class="input-group">
+            <i class="fas fa-user"></i>
+            <input type="text" id="fullName" placeholder="Enter your full name" required>
+        </div>
+
+        <label for="studentEmail">Student Email</label>
+        <div class="input-group">
+            <i class="fas fa-at"></i>
+            <input type="email" id="studentEmail" placeholder="e.g., ciit-lhr-12345@cuilahore.edu.pk" required>
+        </div>
+
+        <label for="phoneNumber">Phone Number</label>
+        <div class="input-group">
+            <i class="fas fa-phone"></i>
+            <input type="tel" id="phoneNumber" placeholder="e.g., 03xx-xxxxxxx" required>
+        </div>
+
+        <label for="paymentScreenshot">Payment Proof (Screenshot)</label>
+        <div class="input-group">
+            <i class="fas fa-file-upload"></i>
+            <input type="file" id="paymentScreenshot" accept="image/*" required>
+            <div class="upload-box" onclick="document.getElementById('paymentScreenshot').click()">
+                Click to Upload Screenshot (Max 2MB)
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-paper-plane"></i> Submit Registration
+            </button>
+            <button type="button" class="cancel-btn" onclick="handleCancel()">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const DASHBOARD_URL = "Student_Dashboard.html";
+    const LOCAL_STORAGE_KEY = 'registeredEvents';
+    const CURRENT_EVENT_KEY = 'currentRegisteringEventId';
+
+    document.getElementById('paymentScreenshot').addEventListener('change', function(e) {
+        const fileName = e.target.files[0] ? e.target.files[0].name : "Click to Upload Screenshot (Max 2MB)";
+        const uploadBox = document.querySelector('.upload-box');
+        uploadBox.innerHTML = `<i class="fas fa-file-upload"></i> ${fileName}`;
+        uploadBox.style.borderColor = "var(--register-green)";
+    });
+
+    function handleSubmit() {
+        // FIX 1: Retrieve the ID of the event the user clicked on the dashboard
+        const eventId = parseInt(localStorage.getItem(CURRENT_EVENT_KEY));
+        const screenshotFile = document.getElementById('paymentScreenshot').files[0];
+        
+        if (!screenshotFile) {
+            alert("Please ensure all fields are filled and a payment screenshot is uploaded.");
+            return;
+        }
+
+        // FIX 2: Update the persistent list of registered IDs
+        if (eventId) {
+            let registeredIds = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '[]');
+            if (!registeredIds.includes(eventId)) {
+                registeredIds.push(eventId);
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(registeredIds));
+            }
+        }
+        
+        // FIX 3: Clean up the temporary key after successful submission
+        localStorage.removeItem(CURRENT_EVENT_KEY);
+
+        alert("Registration submitted successfully! Your status on the dashboard is now 'Registered'.");
+        
+        // Redirect back to the dashboard
+        window.location.href = DASHBOARD_URL;
+    }
+
+    function handleCancel() {
+        if (confirm("Are you sure you want to cancel and return to the events list?")) {
+            // Clean up the temporary key if the user cancels
+            localStorage.removeItem(CURRENT_EVENT_KEY); 
+            window.location.href = DASHBOARD_URL;
+        }
+    }
+</script>
+
+</body>
+</html>

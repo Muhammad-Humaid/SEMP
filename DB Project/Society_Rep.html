@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COMSATS Society Login</title>
+    <link rel="icon" href="COMSATS_new_logo.jpg" type="image/png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-blue: #003399; 
+            --darker-blue: #002080;
+            --light-bg: #f0f4ff; 
+            --secondary-light: #e4e8ff; 
+            --white: #ffffff;
+            --shadow-color: rgba(0,0,0,0.15);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-box {
+            width: 360px;
+            background: var(--white);
+            padding: 40px 30px; 
+            border-radius: 12px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            width: 70px; 
+            height: auto;
+            border-radius: 50%;
+            border: 3px solid var(--primary-blue);
+            padding: 5px;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary-blue);
+            margin-top: 10px;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-blue);
+            font-size: 16px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+            width: 100%;
+            padding: 12px 12px 12px 45px; 
+            border: 1px solid #aaa;
+            border-radius: 6px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 51, 153, 0.2);
+        }
+
+        .captcha-box {
+            display: flex;
+            align-items: center;
+        }
+
+        .captcha {
+            flex: 1;
+            padding: 10px;
+            background: var(--secondary-light);
+            font-weight: bold;
+            font-size: 18px;
+            letter-spacing: 3px;
+            text-align: center;
+            border-radius: 6px;
+            user-select: none;
+        }
+
+        .refresh {
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 24px;
+            color: var(--primary-blue);
+            transition: transform 0.3s;
+        }
+        
+        .refresh:hover {
+             transform: rotate(360deg);
+        }
+        
+        #captchaInput {
+            padding-left: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-blue);
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 25px;
+        }
+
+        button:hover {
+            background: var(--darker-blue);
+        }
+
+        .links {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 14px;
+        }
+        
+        .links p {
+            margin: 5px 0;
+        }
+
+        .links a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .links a:hover {
+            text-decoration: underline;
+        }
+        
+        hr {
+            border: 0;
+            height: 1px;
+            background-color: #eee;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-box">
+    
+    
+    <h2>Society Head Login</h2>
+
+    <form onsubmit="event.preventDefault(); login();">
+        
+        <label for="societyId">Society ID / Email</label>
+        <div class="input-group">
+            <i class="fas fa-users"></i>
+            <input type="text" id="societyId" placeholder="e.g., LitClub-001 or email@society.pk" required>
+        </div>
+
+        <label for="password">Password</label>
+        <div class="input-group">
+            <i class="fas fa-lock"></i>
+            <input type="password" id="password" placeholder="Enter password" required>
+        </div>
+
+        <label>Captcha</label>
+        <div class="captcha-box">
+            <div id="captcha" class="captcha"></div>
+            <div class="refresh" onclick="generateCaptcha()"><i class="fas fa-redo"></i></div>
+        </div>
+
+        <input type="text" id="captchaInput" placeholder="Enter captcha" required>
+
+        <button type="submit">Sign In</button>
+
+        <div class="links">
+            <p><a href="#">Contact Admin for Password Reset</a></p>
+            <hr>
+            <p>Are you a student? <a href="Student_Login.html">Click here for Student Login</a></p>
+            <p>Are you an Admin? <a href="Admin_Login.html">Click here for Admin Login</a></p>
+
+        </div>
+    </form>
+</div>
+
+<script>
+    const DASHBOARD_URL = "Society_Dashboard.html";
+
+    function generateCaptcha(){
+        let chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        let code = "";
+        for(let i = 0; i < 5; i++){
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        document.getElementById("captcha").innerText = code;
+        document.getElementById("captchaInput").value = ""; 
+    }
+
+    function login(){
+        let captchaText = document.getElementById("captcha").innerText.trim();
+        let userInput = document.getElementById("captchaInput").value.trim();
+        const id = document.getElementById("societyId").value;
+        const password = document.getElementById("password").value;
+
+        if (!id || !password) {
+             alert("Please enter your Society ID/Email and Password.");
+             return;
+        }
+
+        if(userInput !== captchaText){
+            alert("Incorrect Captcha! Please try again.");
+            generateCaptcha();
+            return;
+        }
+
+        alert("Login Successful! Redirecting to Society Dashboard.");
+        window.location.href = DASHBOARD_URL; 
+    }
+
+    generateCaptcha();
+</script>
+
+</body>
+</html>

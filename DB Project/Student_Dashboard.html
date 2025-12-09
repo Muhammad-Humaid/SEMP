@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Events</title>
+    <link rel="icon" href="COMSATS_new_logo.jpg" type="image/png">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* BASE COLORS (LIGHT THEME DEFAULT) */
+        :root {
+            --primary-color: #003399; 
+            --dark-accent: #002080;
+            --page-bg: #f0f4ff; 
+            --card-bg: #ffffff;
+            --light-border: #e4e8ff; 
+            --text-color: #333333;
+            --sidebar-text-color: #ffffff; /* FIX: Set sidebar text to white */
+            --table-header-bg: #e4e8ff;
+            --table-row-hover: #f7faff;
+            --register-color: #1e88e5;
+            --logout-color: #f44336;
+            --shadow-color: rgba(0,0,0,0.1);
+            --success-green: #4CAF50;
+        }
+
+        /* DARK THEME OVERRIDES */
+        html.dark-theme {
+            --primary-color: #79a6ff;
+            --dark-accent: #5e84cc;
+            --page-bg: #1c1c1c;
+            --card-bg: #282828;
+            --light-border: #3a3a3a;
+            --text-color: #dddddd;
+            --sidebar-text-color: #1c1c1c; /* Sidebar background is now light, text should be dark */
+            --table-header-bg: #333333;
+            --table-row-hover: #383838;
+            --register-color: #4CAF50; 
+            --logout-color: #ff6b6b;
+            --shadow-color: rgba(255,255,255,0.05);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--page-bg);
+            margin: 0;
+            padding: 0; 
+            color: var(--text-color);
+        }
+
+        .page-container {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding-top: 30px;
+            box-shadow: 2px 0 5px var(--shadow-color);
+        }
+        
+        html.dark-theme .sidebar {
+            background-color: var(--primary-color);
+            color: var(--white); 
+        }
+
+        .sidebar a {
+            padding: 15px 20px;
+            text-decoration: none;
+            color: var(--sidebar-text-color); /* Use the new specific color variable */
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            transition: background-color 0.2s;
+            border-left: 5px solid transparent;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            background-color: var(--dark-accent);
+            border-left: 5px solid var(--success-green);
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 10px 0;
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            text-align: left;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        /* Theme Toggle Button */
+        #theme-toggle {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            padding: 10px 15px;
+            border: 1px solid var(--light-border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            font-size: 18px;
+        }
+        #theme-toggle:hover {
+            background-color: var(--table-row-hover);
+        }
+
+        .logout-btn {
+            background-color: var(--logout-color);
+            color: var(--white);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .event-view {
+            display: none;
+        }
+        .event-view.active {
+            display: block;
+        }
+
+        .table-card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+
+        .table-card h2 {
+            color: var(--dark-accent);
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--light-border);
+            padding-bottom: 10px;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--light-border); font-size: 15px; }
+        th { background-color: var(--table-header-bg); color: var(--dark-accent); font-weight: 700; text-transform: uppercase; }
+        tbody tr:hover { background-color: var(--table-row-hover); }
+
+        .register-btn {
+            background-color: var(--register-color);
+            color: var(--white);
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .register-btn:hover { background-color: var(--dark-accent); }
+        
+        .registered {
+            background-color: var(--table-header-bg);
+            color: var(--text-color);
+            opacity: 0.6;
+            cursor: not-allowed;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+        .status-completed {
+            color: var(--success-green);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-container">
+        
+        <div class="sidebar">
+            <a href="#" class="nav-link active" data-view="upcoming-events" onclick="showView('upcoming-events', this)">
+                <i class="fas fa-calendar-alt"></i> Upcoming Events
+            </a>
+            <a href="#" class="nav-link" data-view="registered-events" onclick="showView('registered-events', this)">
+                <i class="fas fa-check-circle"></i> Registered Events
+            </a>
+            <a href="#" class="nav-link" data-view="past-events" onclick="showView('past-events', this)">
+                <i class="fas fa-history"></i> Past Events
+            </a>
+        </div>
+
+        <div class="main-content">
+            <div class="header-container">
+                <h1>Welcome to the COMSATS Events Portal</h1>
+                <div class="header-actions">
+                    <button id="theme-toggle" onclick="toggleTheme()">
+                        <i class="fas fa-sun"></i> 
+                    </button>
+                    <button class="logout-btn" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+
+            <div id="upcoming-events" class="event-view active">
+                <div class="table-card">
+                    <h2>Available Events for Registration</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Event Name</th>
+                                <th>Society</th>
+                                <th>Date & Time</th>
+                                <th>Venue</th>
+                                <th>Description</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="upcoming-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="registered-events" class="event-view">
+                <div class="table-card">
+                    <h2>Your Current Registrations</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Event Name</th>
+                                <th>Society</th>
+                                <th>Date & Time</th>
+                                <th>Venue</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registered-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="past-events" class="event-view">
+                <div class="table-card">
+                    <h2>Events You Have Attended (or Missed)</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Event Name</th>
+                                <th>Society</th>
+                                <th>Date & Time</th>
+                                <th>Venue</th>
+                                <th>Your Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="past-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const LOGIN_URL = "Student_Login.html";
+        const REGISTRATION_FORM_URL = "Register.html";
+        const LOCAL_STORAGE_KEY = 'registeredEvents';
+        const CURRENT_EVENT_KEY = 'currentRegisteringEventId';
+        const THEME_KEY = 'themePreference';
+
+        const initialEvents = [
+            { id: 1, name: "Annual Debate Competition", society: "Literary Club", dateTime: "2026-03-15, 10:00 AM", date: '2026-03-15', venue: "Main Auditorium", description: "Clash of intellects and speaking skills." },
+            { id: 2, name: "Startup Pitch Night", society: "Entrepreneur Soc.", dateTime: "2025-10-02, 06:00 PM", date: '2025-10-02', venue: "Seminar Room 301", description: "Watch students pitch their innovative business ideas." },
+            { id: 3, name: "Charity Fun Run", society: "Sports Committee", dateTime: "2025-12-01, 08:00 AM", date: '2025-12-01', venue: "Main Field", description: "Run for a cause! (Open to all students)." },
+            { id: 4, name: "AI Workshop Series", society: "CS Club", dateTime: "2026-04-10, 02:00 PM", date: '2026-04-10', venue: "Lab 5", description: "Hands-on introduction to machine learning." }
+        ];
+
+        const upcomingTableBody = document.getElementById('upcoming-table-body');
+        const registeredTableBody = document.getElementById('registered-table-body');
+        const pastTableBody = document.getElementById('past-table-body');
+        const htmlElement = document.documentElement;
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        
+        function getEventsWithStatus() {
+            const today = new Date().toISOString().split('T')[0];
+            const registeredIds = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '[]');
+            
+            return initialEvents.map(event => {
+                const eventDate = event.date;
+                return {
+                    ...event,
+                    registered: registeredIds.includes(event.id),
+                    isPast: eventDate < today
+                };
+            });
+        }
+
+        function registerEvent(eventId) {
+            localStorage.setItem(CURRENT_EVENT_KEY, eventId);
+            window.location.href = REGISTRATION_FORM_URL;
+        }
+
+        function renderUpcomingTable() {
+            const events = getEventsWithStatus();
+            upcomingTableBody.innerHTML = ''; 
+            
+            const upcoming = events.filter(event => !event.isPast && !event.registered);
+
+            if (upcoming.length === 0) {
+                upcomingTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--primary-color); font-weight: 600;">No more open events available.</td></tr>';
+                return;
+            }
+
+            upcoming.forEach(event => {
+                const row = upcomingTableBody.insertRow();
+                
+                const buttonHtml = `<button class="register-btn" onclick="registerEvent(${event.id})"><i class="fas fa-sign-in-alt"></i> Register</button>`;
+
+                row.innerHTML = `
+                    <td>${event.name}</td>
+                    <td>${event.society}</td>
+                    <td>${event.dateTime}</td>
+                    <td>${event.venue}</td>
+                    <td>${event.description}</td>
+                    <td>${buttonHtml}</td>
+                `;
+            });
+        }
+        
+        function renderRegisteredTable() {
+            const events = getEventsWithStatus();
+            registeredTableBody.innerHTML = ''; 
+            
+            const currentRegistrations = events.filter(event => event.registered && !event.isPast);
+
+            if (currentRegistrations.length === 0) {
+                registeredTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--primary-color); font-weight: 600;">You have no active registrations.</td></tr>';
+                return;
+            }
+
+            currentRegistrations.forEach(event => {
+                const row = registeredTableBody.insertRow();
+                
+                row.innerHTML = `
+                    <td>${event.name}</td>
+                    <td>${event.society}</td>
+                    <td>${event.dateTime}</td>
+                    <td>${event.venue}</td>
+                    <td>${event.description}</td>
+                    <td><span class="registered"><i class="fas fa-check"></i> Registered</span></td>
+                `;
+            });
+        }
+        
+        function renderPastTable() {
+            const events = getEventsWithStatus();
+            pastTableBody.innerHTML = ''; 
+            
+            const pastEvents = events.filter(event => event.isPast);
+
+            if (pastEvents.length === 0) {
+                pastTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--primary-color); font-weight: 600;">No past events recorded.</td></tr>';
+                return;
+            }
+
+            pastEvents.forEach(event => {
+                const row = pastTableBody.insertRow();
+                const status = event.registered ? 'Attended' : 'Missed Registration';
+                const statusClass = event.registered ? 'status-completed' : 'text-danger';
+
+                row.innerHTML = `
+                    <td>${event.name}</td>
+                    <td>${event.society}</td>
+                    <td>${event.dateTime}</td>
+                    <td>${event.venue}</td>
+                    <td><span class="${statusClass}">${status}</span></td>
+                `;
+            });
+        }
+
+        function showView(viewId, element) {
+            document.querySelectorAll('.event-view').forEach(view => {
+                view.classList.remove('active');
+            });
+            document.getElementById(viewId).classList.add('active');
+            
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            element.classList.add('active');
+            
+            if (viewId === 'upcoming-events') {
+                renderUpcomingTable();
+            } else if (viewId === 'registered-events') {
+                renderRegisteredTable();
+            } else if (viewId === 'past-events') {
+                renderPastTable();
+            }
+        }
+        
+        function handleLogout() {
+            window.location.href = LOGIN_URL; 
+        }
+
+        function updateThemeIcon(isDark) {
+            themeToggleBtn.innerHTML = isDark 
+                ? '<i class="fas fa-sun"></i>' 
+                : '<i class="fas fa-moon"></i>';
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem(THEME_KEY);
+            if (savedTheme === 'dark') {
+                htmlElement.classList.add('dark-theme');
+                updateThemeIcon(true);
+            } else {
+                htmlElement.classList.remove('dark-theme');
+                updateThemeIcon(false);
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = htmlElement.classList.toggle('dark-theme');
+            localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+            updateThemeIcon(isDark);
+            
+            renderUpcomingTable();
+            renderRegisteredTable();
+            renderPastTable();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTheme();
+            renderUpcomingTable();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Society Dashboard - Proposal Management</title>
+    <link rel="icon" href="COMSATS_new_logo.jpg" type="image/png">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* BASE COLORS (LIGHT THEME DEFAULT) */
+        :root {
+            --primary-color: #003399; 
+            --darker-blue: #002080;
+            --page-bg: #f0f4ff; 
+            --card-bg: #ffffff;
+            --light-border: #e4e8ff; 
+            --text-color: #333333;
+            --table-header-bg: #e4e8ff;
+            --table-row-hover: #f7faff;
+            --add-green: #28a745;
+            --cancel-red: #f44336;
+            --shadow-color: rgba(0,0,0,0.1);
+        }
+
+        /* DARK THEME OVERRIDES */
+        html.dark-theme {
+            --primary-color: #79a6ff;
+            --darker-blue: #5e84cc;
+            --page-bg: #1c1c1c;
+            --card-bg: #282828;
+            --light-border: #3a3a3a;
+            --text-color: #dddddd;
+            --table-header-bg: #333333;
+            --table-row-hover: #383838;
+            --shadow-color: rgba(255,255,255,0.05);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--page-bg);
+            margin: 0;
+            padding: 30px;
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 10px 0;
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            text-align: left;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        /* Theme Toggle Button */
+        #theme-toggle {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            padding: 10px 15px;
+            border: 1px solid var(--light-border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            font-size: 18px;
+        }
+        #theme-toggle:hover {
+            background-color: var(--table-row-hover);
+        }
+        
+        .action-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .view-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--light-border);
+        }
+
+        .view-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-color);
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .view-tab.active {
+            opacity: 1;
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--add-green);
+        }
+
+        .add-btn {
+            background-color: var(--add-green);
+            color: var(--white);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .add-btn:hover { background-color: #1e7e34; }
+
+        .logout-btn {
+            background-color: var(--cancel-red);
+            color: var(--white);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logout-btn:hover { background-color: #c0392b; }
+
+        .table-card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            margin-bottom: 25px; /* Added margin for separation */
+        }
+        .table-card h2 {
+            color: var(--darker-blue);
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--light-border);
+            padding-bottom: 10px;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--light-border); font-size: 14px; }
+        th { background-color: var(--table-header-bg); color: var(--primary-color); font-weight: 700; text-transform: uppercase; }
+        tbody tr:hover { background-color: var(--table-row-hover); }
+
+        .status-pending { color: orange; font-weight: bold; }
+        .status-approved { color: var(--add-green); font-weight: bold; }
+        .status-rejected { color: var(--cancel-red); font-weight: bold; }
+        
+        .rejected-proposal-row {
+             background-color: #fcebeb;
+        }
+        html.dark-theme .rejected-proposal-row {
+            background-color: #581511; 
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            padding-top: 50px;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .close-btn {
+            color: var(--text-color);
+            opacity: 0.6;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+        .close-btn:hover, .close-btn:focus {
+            opacity: 1;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--darker-blue); }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--light-border);
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+        .form-group textarea { resize: vertical; height: 100px; }
+        
+        .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        
+        .proposal-view {
+            display: none;
+        }
+        .proposal-view.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div class="header-container">
+            <h1>Society Event Proposal Management</h1>
+            <div class="header-actions">
+                <button id="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-moon"></i> 
+                </button>
+                <div class="action-group">
+                    <button class="add-btn" onclick="openModal()">
+                        <i class="fas fa-plus-circle"></i> Add New Proposal
+                    </button>
+                    <button class="logout-btn" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="view-tabs">
+            <div class="view-tab active" data-view="pending" onclick="showView('pending', this)">
+                Pending Proposals
+            </div>
+            <div class="view-tab" data-view="past" onclick="showView('past', this)">
+                Past Proposals & Events
+            </div>
+        </div>
+
+        <div id="pending" class="proposal-view active">
+            <div class="table-card">
+                <h2>Pending Proposals</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Event Name</th>
+                            <th>Venue</th>
+                            <th>Day & Time</th>
+                            <th>Budget</th>
+                            <th>Proposal Summary</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pending-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="past" class="proposal-view">
+            
+            <div class="table-card">
+                <h2>Approved Past Events (Completed)</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Event Name</th>
+                            <th>Date</th>
+                            <th>Venue</th>
+                            <th>Budget</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="approved-past-table-body">
+                        </tbody>
+                </table>
+            </div>
+
+            <div class="table-card">
+                <h2>Rejected Proposals</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Event Name</th>
+                            <th>Date</th>
+                            <th>Budget</th>
+                            <th>Rejection Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rejected-past-table-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+
+    </div>
+
+    <div id="proposalModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2>Submit New Event Proposal</h2>
+            <form id="proposalForm" onsubmit="event.preventDefault(); submitProposal();">
+                
+                <div class="form-group">
+                    <label for="societyName">Society Name</label>
+                    <input type="text" id="societyName" required value="Literary Club" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventName">Event Name</label>
+                    <input type="text" id="eventName" required placeholder="e.g., Annual Debate Championship">
+                </div>
+
+                <div class="form-group">
+                    <label for="budget">Requested Budget (PKR)</label>
+                    <input type="number" id="budget" required min="100" placeholder="e.g., 5000">
+                </div>
+
+                <div class="form-group">
+                    <label for="venue">Venue</label>
+                    <select id="venue" required>
+                        <option value="">Select Venue</option>
+                        <option>A-Block (Lecture Halls)</option>
+                        <option>B-Block (Seminar Rooms)</option>
+                        <option>C-Block (Computer Labs / CS Dept.)</option>
+                        <option>D-Block (Management Sciences Halls)</option>
+                        <option>N-Block (General Labs / Classrooms)</option>
+                        <option>O-Block (Library Hall / Research)</option>
+                        <option>Cricket Ground</option>
+                        <option>Central Seminar Hall</option>
+                        <option>Lawn / Central Courtyard</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="requestedDay">Date</label>
+                    <input type="date" id="requestedDay" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="timeSlot">Time Slot</label>
+                    <input type="text" id="timeSlot" required placeholder="e.g., 10:00 AM - 1:00 PM">
+                </div>
+                
+                <div class="form-group">
+                    <label for="proposalDetails">Proposal Details (Remarks)</label>
+                    <textarea id="proposalDetails" required placeholder="Include details like equipment needed, expected attendance, etc."></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="logout-btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="add-btn"><i class="fas fa-upload"></i> Submit to Admin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const LOGIN_URL = "Society_Login.html";
+        const ADMIN_PROPOSALS_KEY = 'adminProposals';
+        const APPROVED_EVENTS_KEY = 'approvedEvents';
+        const REJECTED_EVENTS_KEY = 'rejectedEvents';
+        const THEME_KEY = 'themePreference';
+
+        let proposalCounter = 1;
+        const htmlElement = document.documentElement;
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        
+        function getProposals() {
+            let proposals = localStorage.getItem(ADMIN_PROPOSALS_KEY);
+            let societyProposals = proposals ? JSON.parse(proposals) : [];
+            // Filter only the proposals relevant to this society (hardcoded as Literary Club)
+            return societyProposals.filter(p => p.societyName === "Literary Club");
+        }
+
+        function saveProposals(societyProposals) {
+            let allProposals = JSON.parse(localStorage.getItem(ADMIN_PROPOSALS_KEY) || '[]');
+            
+            // Remove existing proposals by this society
+            allProposals = allProposals.filter(p => p.societyName !== "Literary Club");
+            
+            // Add the updated list back
+            allProposals = allProposals.concat(societyProposals);
+
+            localStorage.setItem(ADMIN_PROPOSALS_KEY, JSON.stringify(allProposals));
+        }
+
+        function getApprovedEvents() {
+            let approved = localStorage.getItem(APPROVED_EVENTS_KEY);
+            return approved ? JSON.parse(approved).filter(p => p.societyName === "Literary Club") : [];
+        }
+
+        function getRejectedEvents() {
+            let rejected = localStorage.getItem(REJECTED_EVENTS_KEY);
+            return rejected ? JSON.parse(rejected).filter(p => p.societyName === "Literary Club") : [];
+        }
+
+        function formatCurrency(amount) {
+            return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function renderPendingTable() {
+            const proposals = getProposals();
+            const tableBody = document.getElementById('pending-table-body');
+            tableBody.innerHTML = '';
+            
+            if (proposals.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--primary-color); font-weight: 600;">No pending proposals from your society.</td></tr>';
+                return;
+            }
+
+            proposals.forEach(p => {
+                const row = tableBody.insertRow();
+                const statusClass = 'status-' + p.status.toLowerCase();
+                
+                row.innerHTML = `
+                    <td>${p.eventName}</td>
+                    <td>${p.venue}</td>
+                    <td>${p.requestedDay} at ${p.timeSlot}</td>
+                    <td>PKR ${formatCurrency(p.budget)}</td>
+                    <td>${p.proposalDetails.substring(0, 50)}...</td>
+                    <td class="${statusClass}">${p.status}</td>
+                `;
+            });
+        }
+        
+        function renderPastProposalsTable() {
+            const approved = getApprovedEvents();
+            const rejected = getRejectedEvents();
+            
+            const approvedTableBody = document.getElementById('approved-past-table-body');
+            const rejectedTableBody = document.getElementById('rejected-past-table-body');
+            
+            approvedTableBody.innerHTML = '';
+            rejectedTableBody.innerHTML = '';
+
+            // --- Render Approved Past Events ---
+            if (approved.length === 0) {
+                approvedTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--primary-color); font-weight: 600;">No events have been approved yet.</td></tr>';
+            } else {
+                approved.forEach(p => {
+                    const row = approvedTableBody.insertRow();
+                    row.innerHTML = `
+                        <td>${p.eventName}</td>
+                        <td>${p.requestedDay}</td>
+                        <td>${p.venue}</td>
+                        <td>PKR ${formatCurrency(p.budget)}</td>
+                        <td>${p.proposalDetails.substring(0, 50)}...</td>
+                    `;
+                });
+            }
+
+            // --- Render Rejected Proposals ---
+            if (rejected.length === 0) {
+                rejectedTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--primary-color); font-weight: 600;">No proposals have been rejected.</td></tr>';
+            } else {
+                rejected.forEach(p => {
+                    const row = rejectedTableBody.insertRow();
+                    row.classList.add('rejected-proposal-row');
+                    row.innerHTML = `
+                        <td>${p.eventName}</td>
+                        <td>${p.requestedDay}</td>
+                        <td>PKR ${formatCurrency(p.budget)}</td>
+                        <td>${p.rejectionReason}</td>
+                    `;
+                });
+            }
+        }
+
+        function submitProposal() {
+            const form = document.getElementById('proposalForm');
+            
+            const newProposal = {
+                id: Date.now(), 
+                societyName: form.societyName.value,
+                eventName: form.eventName.value,
+                budget: parseFloat(form.budget.value),
+                venue: form.venue.value,
+                requestedDay: form.requestedDay.value,
+                timeSlot: form.timeSlot.value,
+                proposalDetails: form.proposalDetails.value,
+                status: 'Pending'
+            };
+
+            const proposals = getProposals();
+            proposals.push(newProposal);
+            saveProposals(proposals);
+
+            form.reset();
+            closeModal();
+            renderPendingTable();
+        }
+
+        function openModal() {
+            document.getElementById('proposalModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('proposalModal').style.display = 'none';
+        }
+
+        function showView(viewId, element) {
+            document.querySelectorAll('.proposal-view').forEach(view => {
+                view.classList.remove('active');
+            });
+            document.getElementById(viewId).classList.add('active');
+            
+            document.querySelectorAll('.view-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            element.classList.add('active');
+            
+            if (viewId === 'pending') {
+                renderPendingTable();
+            } else if (viewId === 'past') {
+                renderPastProposalsTable();
+            }
+        }
+
+        function handleLogout() {
+            window.location.href = LOGIN_URL; 
+        }
+
+        function updateThemeIcon(isDark) {
+            themeToggleBtn.innerHTML = isDark 
+                ? '<i class="fas fa-sun"></i>' 
+                : '<i class="fas fa-moon"></i>';
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem(THEME_KEY);
+            if (savedTheme === 'dark') {
+                htmlElement.classList.add('dark-theme');
+                updateThemeIcon(true);
+            } else {
+                htmlElement.classList.remove('dark-theme');
+                updateThemeIcon(false);
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = htmlElement.classList.toggle('dark-theme');
+            localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+            updateThemeIcon(isDark);
+            
+            renderPendingTable();
+            renderPastProposalsTable();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTheme();
+            renderPendingTable();
+        });
+    </script>
+</body>
+</html>
