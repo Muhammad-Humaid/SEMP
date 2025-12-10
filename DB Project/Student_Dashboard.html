@@ -17,7 +17,7 @@
             --card-bg: #ffffff;
             --light-border: #e4e8ff; 
             --text-color: #333333;
-            --sidebar-text-color: #ffffff; /* FIX: Set sidebar text to white */
+            --sidebar-text-color: #ffffff;
             --table-header-bg: #e4e8ff;
             --table-row-hover: #f7faff;
             --register-color: #1e88e5;
@@ -34,7 +34,7 @@
             --card-bg: #282828;
             --light-border: #3a3a3a;
             --text-color: #dddddd;
-            --sidebar-text-color: #1c1c1c; /* Sidebar background is now light, text should be dark */
+            --sidebar-text-color: #ffffff;
             --table-header-bg: #333333;
             --table-row-hover: #383838;
             --register-color: #4CAF50; 
@@ -71,7 +71,7 @@
         .sidebar a {
             padding: 15px 20px;
             text-decoration: none;
-            color: var(--sidebar-text-color); /* Use the new specific color variable */
+            color: var(--sidebar-text-color);
             display: flex;
             align-items: center;
             gap: 10px;
@@ -110,7 +110,6 @@
             gap: 15px;
         }
         
-        /* Theme Toggle Button */
         #theme-toggle {
             background-color: var(--card-bg);
             color: var(--text-color);
@@ -242,6 +241,7 @@
                                 <th>Society</th>
                                 <th>Date & Time</th>
                                 <th>Venue</th>
+                                <th>Ticket Price</th>
                                 <th>Description</th>
                                 <th>Action</th>
                             </tr>
@@ -301,10 +301,10 @@
         const THEME_KEY = 'themePreference';
 
         const initialEvents = [
-            { id: 1, name: "Annual Debate Competition", society: "Literary Club", dateTime: "2026-03-15, 10:00 AM", date: '2026-03-15', venue: "Main Auditorium", description: "Clash of intellects and speaking skills." },
-            { id: 2, name: "Startup Pitch Night", society: "Entrepreneur Soc.", dateTime: "2025-10-02, 06:00 PM", date: '2025-10-02', venue: "Seminar Room 301", description: "Watch students pitch their innovative business ideas." },
-            { id: 3, name: "Charity Fun Run", society: "Sports Committee", dateTime: "2025-12-01, 08:00 AM", date: '2025-12-01', venue: "Main Field", description: "Run for a cause! (Open to all students)." },
-            { id: 4, name: "AI Workshop Series", society: "CS Club", dateTime: "2026-04-10, 02:00 PM", date: '2026-04-10', venue: "Lab 5", description: "Hands-on introduction to machine learning." }
+            { id: 1, name: "Annual Debate Competition", society: "Literary Club", dateTime: "2026-03-15, 10:00 AM", date: '2026-03-15', venue: "Main Auditorium", description: "Clash of intellects and speaking skills.", ticketPrice: 500 },
+            { id: 2, name: "Startup Pitch Night", society: "Entrepreneur Soc.", dateTime: "2025-10-02, 06:00 PM", date: '2025-10-02', venue: "Seminar Room 301", description: "Watch students pitch their innovative business ideas.", ticketPrice: 0 },
+            { id: 3, name: "Charity Fun Run", society: "Sports Committee", dateTime: "2025-12-01, 08:00 AM", date: '2025-12-01', venue: "Main Field", description: "Run for a cause! (Open to all students).", ticketPrice: 150 },
+            { id: 4, name: "AI Workshop Series", society: "CS Club", dateTime: "2026-04-10, 02:00 PM", date: '2026-04-10', venue: "Lab 5", description: "Hands-on introduction to machine learning.", ticketPrice: 0 }
         ];
 
         const upcomingTableBody = document.getElementById('upcoming-table-body');
@@ -312,6 +312,10 @@
         const pastTableBody = document.getElementById('past-table-body');
         const htmlElement = document.documentElement;
         const themeToggleBtn = document.getElementById('theme-toggle');
+        
+        function formatCurrency(amount) {
+            return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
         
         function getEventsWithStatus() {
             const today = new Date().toISOString().split('T')[0];
@@ -328,7 +332,12 @@
         }
 
         function registerEvent(eventId) {
+            const events = getEventsWithStatus();
+            const event = events.find(e => e.id === eventId);
+            
             localStorage.setItem(CURRENT_EVENT_KEY, eventId);
+            localStorage.setItem('currentEventFee', event.ticketPrice);
+            
             window.location.href = REGISTRATION_FORM_URL;
         }
 
@@ -339,7 +348,7 @@
             const upcoming = events.filter(event => !event.isPast && !event.registered);
 
             if (upcoming.length === 0) {
-                upcomingTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--primary-color); font-weight: 600;">No more open events available.</td></tr>';
+                upcomingTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--primary-color); font-weight: 600;">No more open events available.</td></tr>';
                 return;
             }
 
@@ -347,12 +356,15 @@
                 const row = upcomingTableBody.insertRow();
                 
                 const buttonHtml = `<button class="register-btn" onclick="registerEvent(${event.id})"><i class="fas fa-sign-in-alt"></i> Register</button>`;
+                
+                const price = event.ticketPrice > 0 ? `PKR ${formatCurrency(event.ticketPrice)}` : 'FREE';
 
                 row.innerHTML = `
                     <td>${event.name}</td>
                     <td>${event.society}</td>
                     <td>${event.dateTime}</td>
                     <td>${event.venue}</td>
+                    <td>${price}</td>
                     <td>${event.description}</td>
                     <td>${buttonHtml}</td>
                 `;

@@ -2,42 +2,83 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>COMSATS Faculty Login</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" href="COMSATS_new_logo.jpg" type="image/png">
     
     <style>
-        /* Base Colors from COMSATS Login Theme */
+        /* BASE COLORS (LIGHT THEME DEFAULT) */
         :root {
             --primary-blue: #003399; 
             --darker-blue: #002080;
-            --light-bg: #f0f4ff; 
+            --page-bg: #f0f4ff; 
+            --card-bg: #ffffff;
             --secondary-light: #e4e8ff; 
-            --white: #ffffff;
+            --text-color: #333333;
+            --input-border: #aaa;
+            --link-color: var(--primary-blue);
             --shadow-color: rgba(0,0,0,0.15);
+        }
+
+        /* DARK THEME OVERRIDES */
+        html.dark-theme {
+            --primary-blue: #79a6ff; 
+            --darker-blue: #5e84cc;
+            --page-bg: #1c1c1c; 
+            --card-bg: #282828;
+            --secondary-light: #3a3a3a; 
+            --text-color: #dddddd;
+            --input-border: #555;
+            --link-color: #98bfff;
+            --shadow-color: rgba(0,0,0,0.5);
         }
 
         body {
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--light-bg);
+            background: var(--page-bg);
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            color: var(--text-color);
         }
 
         .login-box {
             width: 360px;
-            background: var(--white);
+            background: var(--card-bg);
             padding: 40px 30px; 
             border-radius: 12px;
             box-shadow: 0 10px 30px var(--shadow-color); 
         }
+        
+        .header-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+        }
+
+        /* Theme Toggle Button */
+        #theme-toggle {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            padding: 8px 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            font-size: 16px;
+        }
+        #theme-toggle:hover {
+            background-color: var(--secondary-light);
+        }
+
 
         h2 {
             text-align: center;
             color: var(--primary-blue);
+            margin-top: 0;
             margin-bottom: 30px; 
             font-size: 24px;
         }
@@ -49,7 +90,6 @@
             margin-bottom: 5px;
         }
 
-        /* Input Group for Icon Placement (added for better design) */
         .input-group {
             position: relative;
             margin-bottom: 20px;
@@ -72,13 +112,14 @@
             padding-left: 45px;
             margin-top: 6px;
             margin-bottom: 15px;
-            border: 1px solid #aaa;
+            border: 1px solid var(--input-border);
             border-radius: 6px;
             box-sizing: border-box; 
+            background-color: var(--card-bg);
+            color: var(--text-color);
             transition: border-color 0.3s;
         }
         
-        /* Remove extra padding for captcha input, which is handled separately */
         #captchaInput {
             padding-left: 10px; 
         }
@@ -97,6 +138,7 @@
             flex: 1;
             padding: 10px;
             background: var(--secondary-light);
+            color: var(--text-color);
             font-weight: bold;
             font-size: 18px;
             letter-spacing: 3px;
@@ -114,7 +156,7 @@
         }
         
         .refresh:hover {
-             transform: rotate(360deg);
+            transform: rotate(360deg);
         }
 
         button {
@@ -146,7 +188,7 @@
         }
 
         .links a {
-            color: var(--primary-blue);
+            color: var(--link-color);
             text-decoration: none;
             font-weight: bold;
         }
@@ -158,7 +200,7 @@
         hr {
             border: 0;
             height: 1px;
-            background-color: #eee;
+            background-color: var(--secondary-light);
             margin: 15px 0;
         }
     </style>
@@ -166,6 +208,12 @@
 <body>
 
 <div class="login-box">
+    <div class="header-actions">
+        <button id="theme-toggle" onclick="toggleTheme()" title="Toggle Light/Dark Mode">
+            <i class="fas fa-moon"></i> 
+        </button>
+    </div>
+    
     <h2>Faculty/Admin Login</h2>
 
     <label>Faculty Email</label>
@@ -182,7 +230,7 @@
 
     <label>Captcha</label>
     <div class="captcha-box">
-        <div id="captcha" class="captcha">AB123</div>
+        <div id="captcha" class="captcha"></div>
         <div class="refresh" onclick="generateCaptcha()" title="Refresh Captcha">
             <i class="fas fa-redo"></i>
         </div>
@@ -202,6 +250,9 @@
 
 <script>
     const DASHBOARD_URL = "Admin_Dashboard.html";
+    const THEME_KEY = 'themePreference';
+    const htmlElement = document.documentElement;
+    const themeToggleBtn = document.getElementById('theme-toggle');
 
     function generateCaptcha(){
         let chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -221,22 +272,47 @@
         const password = document.getElementById("password").value;
         
         if (!email || !password) {
-             alert("Please enter your email and password.");
-             return;
+            
+            return;
         }
 
-
         if(userInput !== captchaText){
-            alert("Incorrect Captcha!");
+            
             generateCaptcha();
             return;
         }
 
-  
-        window.location.href = 'Admin_Dashboard.html'; 
+        window.location.href = DASHBOARD_URL; 
     }
 
-    generateCaptcha();
+    function updateThemeIcon(isDark) {
+        themeToggleBtn.innerHTML = isDark 
+            ? '<i class="fas fa-sun"></i>' 
+            : '<i class="fas fa-moon"></i>';
+    }
+
+    function loadTheme() {
+        const savedTheme = localStorage.getItem(THEME_KEY);
+        if (savedTheme === 'dark') {
+            htmlElement.classList.add('dark-theme');
+            updateThemeIcon(true);
+        } else {
+            htmlElement.classList.remove('dark-theme');
+            updateThemeIcon(false);
+        }
+    }
+
+    function toggleTheme() {
+        const isDark = htmlElement.classList.toggle('dark-theme');
+        // Save preference so the dashboard can load it automatically
+        localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+        updateThemeIcon(isDark);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadTheme();
+        generateCaptcha();
+    });
 </script>
 
 </body>

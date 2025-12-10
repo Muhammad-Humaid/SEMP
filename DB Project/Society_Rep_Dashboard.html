@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <style>
-        /* BASE COLORS (LIGHT THEME DEFAULT) */
         :root {
             --primary-color: #003399; 
             --darker-blue: #002080;
@@ -22,9 +21,10 @@
             --add-green: #28a745;
             --cancel-red: #f44336;
             --shadow-color: rgba(0,0,0,0.1);
+            --issue-ticket-color: #ffc107;
+            --verify-color: #1e88e5; 
         }
 
-        /* DARK THEME OVERRIDES */
         html.dark-theme {
             --primary-color: #79a6ff;
             --darker-blue: #5e84cc;
@@ -35,6 +35,8 @@
             --table-header-bg: #333333;
             --table-row-hover: #383838;
             --shadow-color: rgba(255,255,255,0.05);
+            --issue-ticket-color: #ff9800;
+            --verify-color: #1565c0;
         }
 
         body {
@@ -72,7 +74,6 @@
             align-items: center;
         }
 
-        /* Theme Toggle Button */
         #theme-toggle {
             background-color: var(--card-bg);
             color: var(--text-color);
@@ -146,7 +147,7 @@
             padding: 25px;
             border-radius: 12px;
             box-shadow: 0 4px 15px var(--shadow-color);
-            margin-bottom: 25px; /* Added margin for separation */
+            margin-bottom: 25px;
         }
         .table-card h2 {
             color: var(--darker-blue);
@@ -191,7 +192,7 @@
             padding: 30px;
             border-radius: 10px;
             width: 80%;
-            max-width: 600px;
+            max-width: 700px; /* Increased size for verification modal */
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             position: relative;
         }
@@ -232,6 +233,61 @@
         .proposal-view.active {
             display: block;
         }
+        
+        .verify-btn {
+            background-color: var(--verify-color);
+            color: var(--white);
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .verify-btn:hover { background-color: #1565c0; }
+        
+        .issued-ticket {
+            color: var(--add-green);
+            font-weight: bold;
+        }
+
+        #verification-details p {
+            margin: 8px 0;
+            font-size: 16px;
+        }
+
+        #verification-details span {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        #screenshot-placeholder {
+            width: 100%;
+            height: 200px;
+            background-color: var(--table-header-bg);
+            border: 2px dashed var(--light-border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            margin-top: 15px;
+            color: var(--text-color);
+            opacity: 0.7;
+            text-align: center;
+        }
+        
+        .verification-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            gap: 15px;
+        }
+        .verification-actions button {
+            flex: 1;
+        }
+        
+        .accept-btn-modal { background-color: var(--add-green); color: var(--white); }
+        .reject-btn-modal { background-color: var(--cancel-red); color: var(--white); }
     </style>
 </head>
 <body>
@@ -245,7 +301,7 @@
                     <i class="fas fa-moon"></i> 
                 </button>
                 <div class="action-group">
-                    <button class="add-btn" onclick="openModal()">
+                    <button class="add-btn" onclick="openProposalModal()">
                         <i class="fas fa-plus-circle"></i> Add New Proposal
                     </button>
                     <button class="logout-btn" onclick="handleLogout()">
@@ -258,6 +314,9 @@
         <div class="view-tabs">
             <div class="view-tab active" data-view="pending" onclick="showView('pending', this)">
                 Pending Proposals
+            </div>
+            <div class="view-tab" data-view="participants" onclick="showView('participants', this)">
+                Participants Verification
             </div>
             <div class="view-tab" data-view="past" onclick="showView('past', this)">
                 Past Proposals & Events
@@ -274,11 +333,61 @@
                             <th>Venue</th>
                             <th>Day & Time</th>
                             <th>Budget</th>
+                            <th>Ticket Price</th>
                             <th>Proposal Summary</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="pending-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="participants" class="proposal-view">
+            <div class="table-card">
+                <h2>Pending Participant Registrations</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Event Name</th>
+                            <th>Fee Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="participants-table-body">
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-card">
+                <h2>Issued Tickets</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Event Name</th>
+                            <th>Ticket Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="issued-tickets-table-body">
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-card">
+                <h2>Rejected Participants</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Event Name</th>
+                            <th>Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rejected-participants-table-body">
                     </tbody>
                 </table>
             </div>
@@ -325,7 +434,7 @@
 
     <div id="proposalModal" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <span class="close-btn" onclick="closeModal('proposalModal')">&times;</span>
             <h2>Submit New Event Proposal</h2>
             <form id="proposalForm" onsubmit="event.preventDefault(); submitProposal();">
                 
@@ -342,6 +451,11 @@
                 <div class="form-group">
                     <label for="budget">Requested Budget (PKR)</label>
                     <input type="number" id="budget" required min="100" placeholder="e.g., 5000">
+                </div>
+
+                <div class="form-group">
+                    <label for="ticketPrice">Ticket Price (PKR)</label>
+                    <input type="number" id="ticketPrice" required min="0" value="0" placeholder="e.g., 500">
                 </div>
 
                 <div class="form-group">
@@ -376,51 +490,109 @@
                 </div>
                 
                 <div class="form-actions">
-                    <button type="button" class="logout-btn" onclick="closeModal()">Cancel</button>
+                    <button type="button" class="logout-btn" onclick="closeModal('proposalModal')">Cancel</button>
                     <button type="submit" class="add-btn"><i class="fas fa-upload"></i> Submit to Admin</button>
                 </div>
             </form>
         </div>
     </div>
+    
+    <div id="verificationModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('verificationModal')">&times;</span>
+            <h2>Participant Verification</h2>
+            
+            <div id="verification-details">
+                <p>Name: <span id="verify-name"></span></p>
+                <p>Email: <span id="verify-email"></span></p>
+                <p>Event: <span id="verify-event"></span></p>
+                <p>Fee Required: <span id="verify-fee"></span></p>
+            </div>
+            
+            <div id="screenshot-placeholder">
+                Payment Screenshot Placeholder
+            </div>
+            
+            <div class="verification-actions">
+                <button class="accept-btn-modal" onclick="acceptParticipant()"><i class="fas fa-check"></i> Accept & Issue Ticket</button>
+                <button class="reject-btn-modal" onclick="rejectParticipant()"><i class="fas fa-times"></i> Reject Registration</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        const LOGIN_URL = "Society_Login.html";
+        const LOGIN_URL = "Society_Rep.html";
         const ADMIN_PROPOSALS_KEY = 'adminProposals';
         const APPROVED_EVENTS_KEY = 'approvedEvents';
         const REJECTED_EVENTS_KEY = 'rejectedEvents';
+        const PENDING_PARTICIPANTS_KEY = 'pendingParticipants';
+        const TICKETS_ISSUED_KEY = 'ticketsIssued';
+        const REJECTED_PARTICIPANTS_KEY = 'rejectedParticipants';
         const THEME_KEY = 'themePreference';
 
         let proposalCounter = 1;
         const htmlElement = document.documentElement;
         const themeToggleBtn = document.getElementById('theme-toggle');
+        const SOCIETY_NAME = "Literary Club";
+        let currentParticipantId = null;
         
         function getProposals() {
             let proposals = localStorage.getItem(ADMIN_PROPOSALS_KEY);
             let societyProposals = proposals ? JSON.parse(proposals) : [];
-            // Filter only the proposals relevant to this society (hardcoded as Literary Club)
-            return societyProposals.filter(p => p.societyName === "Literary Club");
+            return societyProposals.filter(p => p.societyName === SOCIETY_NAME);
         }
 
         function saveProposals(societyProposals) {
             let allProposals = JSON.parse(localStorage.getItem(ADMIN_PROPOSALS_KEY) || '[]');
-            
-            // Remove existing proposals by this society
-            allProposals = allProposals.filter(p => p.societyName !== "Literary Club");
-            
-            // Add the updated list back
+            allProposals = allProposals.filter(p => p.societyName !== SOCIETY_NAME);
             allProposals = allProposals.concat(societyProposals);
-
             localStorage.setItem(ADMIN_PROPOSALS_KEY, JSON.stringify(allProposals));
         }
 
         function getApprovedEvents() {
             let approved = localStorage.getItem(APPROVED_EVENTS_KEY);
-            return approved ? JSON.parse(approved).filter(p => p.societyName === "Literary Club") : [];
+            return approved ? JSON.parse(approved).filter(p => p.societyName === SOCIETY_NAME) : [];
         }
 
         function getRejectedEvents() {
             let rejected = localStorage.getItem(REJECTED_EVENTS_KEY);
-            return rejected ? JSON.parse(rejected).filter(p => p.societyName === "Literary Club") : [];
+            return rejected ? JSON.parse(rejected).filter(p => p.societyName === SOCIETY_NAME) : [];
+        }
+        
+        function getPendingParticipants() {
+            const pending = localStorage.getItem(PENDING_PARTICIPANTS_KEY);
+            return pending ? JSON.parse(pending).filter(p => p.societyName === SOCIETY_NAME) : [];
+        }
+
+        function savePendingParticipants(participants) {
+            let allParticipants = JSON.parse(localStorage.getItem(PENDING_PARTICIPANTS_KEY) || '[]');
+            allParticipants = allParticipants.filter(p => p.societyName !== SOCIETY_NAME);
+            allParticipants = allParticipants.concat(participants);
+            localStorage.setItem(PENDING_PARTICIPANTS_KEY, JSON.stringify(allParticipants));
+        }
+        
+        function getIssuedTickets() {
+            const issued = localStorage.getItem(TICKETS_ISSUED_KEY);
+            return issued ? JSON.parse(issued).filter(p => p.societyName === SOCIETY_NAME) : [];
+        }
+
+        function saveIssuedTickets(tickets) {
+            let allTickets = JSON.parse(localStorage.getItem(TICKETS_ISSUED_KEY) || '[]');
+            allTickets = allTickets.filter(p => p.societyName !== SOCIETY_NAME);
+            allTickets = allTickets.concat(tickets);
+            localStorage.setItem(TICKETS_ISSUED_KEY, JSON.stringify(allTickets));
+        }
+        
+        function getRejectedParticipants() {
+            const rejected = localStorage.getItem(REJECTED_PARTICIPANTS_KEY);
+            return rejected ? JSON.parse(rejected).filter(p => p.societyName === SOCIETY_NAME) : [];
+        }
+
+        function saveRejectedParticipants(rejected) {
+            let allRejected = JSON.parse(localStorage.getItem(REJECTED_PARTICIPANTS_KEY) || '[]');
+            allRejected = allRejected.filter(p => p.societyName !== SOCIETY_NAME);
+            allRejected = allRejected.concat(rejected);
+            localStorage.setItem(REJECTED_PARTICIPANTS_KEY, JSON.stringify(allRejected));
         }
 
         function formatCurrency(amount) {
@@ -433,7 +605,7 @@
             tableBody.innerHTML = '';
             
             if (proposals.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--primary-color); font-weight: 600;">No pending proposals from your society.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--primary-color); font-weight: 600;">No pending proposals from your society.</td></tr>';
                 return;
             }
 
@@ -446,6 +618,7 @@
                     <td>${p.venue}</td>
                     <td>${p.requestedDay} at ${p.timeSlot}</td>
                     <td>PKR ${formatCurrency(p.budget)}</td>
+                    <td>PKR ${formatCurrency(p.ticketPrice)}</td>
                     <td>${p.proposalDetails.substring(0, 50)}...</td>
                     <td class="${statusClass}">${p.status}</td>
                 `;
@@ -462,7 +635,6 @@
             approvedTableBody.innerHTML = '';
             rejectedTableBody.innerHTML = '';
 
-            // --- Render Approved Past Events ---
             if (approved.length === 0) {
                 approvedTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--primary-color); font-weight: 600;">No events have been approved yet.</td></tr>';
             } else {
@@ -478,7 +650,6 @@
                 });
             }
 
-            // --- Render Rejected Proposals ---
             if (rejected.length === 0) {
                 rejectedTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--primary-color); font-weight: 600;">No proposals have been rejected.</td></tr>';
             } else {
@@ -494,6 +665,164 @@
                 });
             }
         }
+        
+        function renderParticipantsTable() {
+            const pendingParticipants = getPendingParticipants();
+            const issuedTickets = getIssuedTickets();
+            const rejectedParticipants = getRejectedParticipants();
+            
+            const pendingTableBody = document.getElementById('participants-table-body');
+            const issuedTableBody = document.getElementById('issued-tickets-table-body');
+            const rejectedTableBody = document.getElementById('rejected-participants-table-body');
+            
+            pendingTableBody.innerHTML = '';
+            issuedTableBody.innerHTML = '';
+            rejectedTableBody.innerHTML = '';
+
+            // Render Pending Participants
+            if (pendingParticipants.length === 0) {
+                pendingTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No pending registrations requiring verification.</td></tr>';
+            } else {
+                pendingParticipants.forEach(p => {
+                    const row = pendingTableBody.insertRow();
+                    const feeStatus = p.paymentProof ? 'Paid/Pending Proof' : 'Free Event';
+                    row.innerHTML = `
+                        <td>${p.name}</td>
+                        <td>${p.email}</td>
+                        <td>${p.eventName}</td>
+                        <td>${feeStatus}</td>
+                        <td>
+                            <button class="verify-btn" onclick="openVerificationModal(${p.id})">
+                                <i class="fas fa-search"></i> Verify Payment
+                            </button>
+                        </td>
+                    `;
+                });
+            }
+
+            // Render Issued Tickets
+            if (issuedTickets.length === 0) {
+                issuedTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No tickets issued yet.</td></tr>';
+            } else {
+                issuedTickets.forEach(t => {
+                    const row = issuedTableBody.insertRow();
+                    row.innerHTML = `
+                        <td>${t.name}</td>
+                        <td>${t.email}</td>
+                        <td>${t.eventName}</td>
+                        <td><span class="issued-ticket"><i class="fas fa-check"></i> Issued</span></td>
+                    `;
+                });
+            }
+            
+            // Render Rejected Participants
+            if (rejectedParticipants.length === 0) {
+                rejectedTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No rejected participants.</td></tr>';
+            } else {
+                rejectedParticipants.forEach(p => {
+                    const row = rejectedTableBody.insertRow();
+                    row.classList.add('rejected-proposal-row');
+                    row.innerHTML = `
+                        <td>${p.name}</td>
+                        <td>${p.email}</td>
+                        <td>${p.eventName}</td>
+                        <td>${p.rejectionReason || 'No reason provided'}</td>
+                    `;
+                });
+            }
+        }
+        
+        function openVerificationModal(participantId) {
+            const participant = getPendingParticipants().find(p => p.id === participantId);
+            if (!participant) return;
+
+            currentParticipantId = participantId;
+            
+            document.getElementById('verify-name').textContent = participant.name;
+            document.getElementById('verify-email').textContent = participant.email;
+            document.getElementById('verify-event').textContent = participant.eventName;
+            
+            const isFeeRequired = participant.paymentProof;
+            const feeDisplay = isFeeRequired ? 'Yes (Proof Pending)' : 'No (Free Event)';
+            document.getElementById('verify-fee').textContent = feeDisplay;
+
+            const screenshotPlaceholder = document.getElementById('screenshot-placeholder');
+            if (isFeeRequired) {
+                screenshotPlaceholder.innerHTML = `<i class="fas fa-image fa-2x"></i> Viewing Payment Proof for ${participant.name}...`;
+                screenshotPlaceholder.style.cursor = 'pointer'; 
+                screenshotPlaceholder.onclick = () => {
+                    window.open(participant.paymentProof, '_blank');
+                };
+            } else {
+                screenshotPlaceholder.innerHTML = `<i class="fas fa-check-circle fa-2x"></i> No fee required for this event.`;
+                screenshotPlaceholder.style.cursor = 'default';
+                screenshotPlaceholder.onclick = null;
+            }
+
+            document.getElementById('verificationModal').style.display = 'block';
+        }
+
+        function acceptParticipant() {
+            if (!currentParticipantId) return;
+            
+            let pendingParticipants = getPendingParticipants();
+            const index = pendingParticipants.findIndex(p => p.id === currentParticipantId);
+            
+            if (index === -1) return;
+
+            const participant = pendingParticipants[index];
+            
+            const issuedTickets = getIssuedTickets();
+            issuedTickets.push({
+                id: participant.id,
+                name: participant.name,
+                email: participant.email,
+                eventName: participant.eventName,
+                societyName: participant.societyName,
+                ticketStatus: 'Issued'
+            });
+            saveIssuedTickets(issuedTickets);
+            
+            pendingParticipants.splice(index, 1);
+            savePendingParticipants(pendingParticipants);
+
+            closeModal('verificationModal');
+            renderParticipantsTable();
+            currentParticipantId = null;
+        }
+
+        function rejectParticipant() {
+            if (!currentParticipantId) return;
+
+            const rejectionReason = prompt("Enter reason for rejecting this participant:");
+
+            if (rejectionReason === null || rejectionReason.trim() === "") {
+                return;
+            }
+            
+            let pendingParticipants = getPendingParticipants();
+            const index = pendingParticipants.findIndex(p => p.id === currentParticipantId);
+            
+            if (index === -1) return;
+
+            const participant = pendingParticipants[index];
+            
+            const rejectedParticipants = getRejectedParticipants();
+            rejectedParticipants.push({
+                ...participant,
+                rejectionReason: rejectionReason,
+                status: 'Rejected'
+            });
+            saveRejectedParticipants(rejectedParticipants);
+            
+            pendingParticipants.splice(index, 1);
+            savePendingParticipants(pendingParticipants);
+
+            closeModal('verificationModal');
+            renderParticipantsTable();
+            currentParticipantId = null;
+        }
+
 
         function submitProposal() {
             const form = document.getElementById('proposalForm');
@@ -503,6 +832,7 @@
                 societyName: form.societyName.value,
                 eventName: form.eventName.value,
                 budget: parseFloat(form.budget.value),
+                ticketPrice: parseFloat(form.ticketPrice.value),
                 venue: form.venue.value,
                 requestedDay: form.requestedDay.value,
                 timeSlot: form.timeSlot.value,
@@ -515,16 +845,17 @@
             saveProposals(proposals);
 
             form.reset();
-            closeModal();
+            closeModal('proposalModal');
             renderPendingTable();
         }
 
-        function openModal() {
+        function openProposalModal() {
             document.getElementById('proposalModal').style.display = 'block';
         }
 
-        function closeModal() {
-            document.getElementById('proposalModal').style.display = 'none';
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            currentParticipantId = null;
         }
 
         function showView(viewId, element) {
@@ -540,6 +871,8 @@
             
             if (viewId === 'pending') {
                 renderPendingTable();
+            } else if (viewId === 'participants') {
+                renderParticipantsTable();
             } else if (viewId === 'past') {
                 renderPastProposalsTable();
             }
@@ -573,11 +906,20 @@
             
             renderPendingTable();
             renderPastProposalsTable();
+            renderParticipantsTable();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             loadTheme();
             renderPendingTable();
+            
+            const mockParticipants = [
+                { id: 101, name: "Ahmed Khan", email: "ahmed.k@students.comsats.edu.pk", eventId: 1, eventName: "Annual Debate Championship", societyName: SOCIETY_NAME, paymentProof: "https://via.placeholder.com/150/FF5733/FFFFFF?text=Mock+Proof+1" },
+                { id: 102, name: "Sara Tariq", email: "sara.t@students.comsats.edu.pk", eventId: 1, eventName: "Annual Debate Championship", societyName: SOCIETY_NAME, paymentProof: "https://via.placeholder.com/150/33FF57/FFFFFF?text=Mock+Proof+2" }
+            ];
+            if (!localStorage.getItem(PENDING_PARTICIPANTS_KEY)) {
+                savePendingParticipants(mockParticipants);
+            }
         });
     </script>
 </body>
