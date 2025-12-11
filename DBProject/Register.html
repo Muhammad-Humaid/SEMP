@@ -3,37 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Event Registration Form</title>
     <link rel="icon" href="COMSATS_new_logo.jpg" type="image/png">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <style>
+        /* BASE COLORS (LIGHT THEME DEFAULT) */
         :root {
             --primary-blue: #003399; 
             --darker-blue: #002080;
-            --light-bg: #f0f4ff; 
+            --page-bg: #f0f4ff; 
+            --card-bg: #ffffff;
             --secondary-light: #e4e8ff; 
-            --white: #ffffff;
+            --text-color: #333333;
+            --input-border: #ccc;
             --register-green: #4CAF50;
             --cancel-red: #f44336;
             --shadow-color: rgba(0,0,0,0.15);
+            --placeholder-color: #777;
+        }
+
+        /* DARK THEME OVERRIDES */
+        html.dark-theme {
+            --primary-blue: #79a6ff; 
+            --darker-blue: #5e84cc;
+            --page-bg: #1c1c1c; 
+            --card-bg: #282828;
+            --secondary-light: #3a3a3a; 
+            --text-color: #dddddd;
+            --input-border: #555;
+            --shadow-color: rgba(0,0,0,0.5);
+            --placeholder-color: #999;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--light-bg);
+            background-color: var(--page-bg);
             margin: 0;
             padding: 30px;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            color: var(--text-color);
         }
 
         .form-container {
             width: 500px;
-            background: var(--white);
+            background: var(--card-bg);
             padding: 40px;
             border-radius: 12px;
             box-shadow: 0 10px 30px var(--shadow-color);
@@ -48,13 +66,39 @@
             font-size: 24px;
         }
 
+        #fee-display {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--darker-blue);
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid var(--secondary-light);
+            border-radius: 8px;
+        }
+        
+        #payment-instruction {
+            color: var(--primary-blue);
+            font-size: 14px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: var(--secondary-light);
+            border-radius: 4px;
+        }
+
         label {
             display: block;
             font-weight: 600;
             font-size: 14px;
-            color: #333;
+            color: var(--text-color);
             margin-bottom: 5px;
             margin-top: 15px;
+        }
+        
+        .required::after {
+            content: '*';
+            color: var(--cancel-red);
+            margin-left: 4px;
         }
 
         .input-group {
@@ -73,13 +117,20 @@
         input[type="text"],
         input[type="email"],
         input[type="tel"],
-        .upload-box {
+        input[type="file"] + .upload-box {
             width: 100%;
             padding: 12px 12px 12px 45px;
-            border: 1px solid #ccc;
+            border: 1px solid var(--input-border);
             border-radius: 8px;
             box-sizing: border-box;
             transition: border-color 0.3s;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+        
+        input::placeholder {
+            color: var(--placeholder-color);
+            opacity: 0.7;
         }
         
         .upload-box {
@@ -89,8 +140,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #777;
-            border-style: dashed;
+            color: var(--placeholder-color);
+            border-style: dashed !important;
             font-size: 16px;
         }
         
@@ -145,32 +196,38 @@
 
 <div class="form-container">
     <h2>Event Registration</h2>
+
+    <div id="fee-display">Fee: Loading...</div>
+
     <form id="registrationForm" onsubmit="event.preventDefault(); handleSubmit();">
         
-        <label for="fullName">Full Name</label>
+        <label for="fullName" class="required">Full Name</label>
         <div class="input-group">
             <i class="fas fa-user"></i>
             <input type="text" id="fullName" placeholder="Enter your full name" required>
         </div>
 
-        <label for="studentEmail">Student Email</label>
+        <label for="studentEmail" class="required">Student Email</label>
         <div class="input-group">
             <i class="fas fa-at"></i>
             <input type="email" id="studentEmail" placeholder="e.g., ciit-lhr-12345@cuilahore.edu.pk" required>
         </div>
 
-        <label for="phoneNumber">Phone Number</label>
+        <label for="phoneNumber" class="required">Phone Number</label>
         <div class="input-group">
             <i class="fas fa-phone"></i>
             <input type="tel" id="phoneNumber" placeholder="e.g., 03xx-xxxxxxx" required>
         </div>
 
-        <label for="paymentScreenshot">Payment Proof (Screenshot)</label>
-        <div class="input-group">
-            <i class="fas fa-file-upload"></i>
-            <input type="file" id="paymentScreenshot" accept="image/*" required>
-            <div class="upload-box" onclick="document.getElementById('paymentScreenshot').click()">
-                Click to Upload Screenshot (Max 2MB)
+        <div id="payment-section">
+            <div id="payment-instruction" style="display: none;"></div>
+            <label for="paymentScreenshot" id="screenshot-label">Payment Proof (Screenshot)</label>
+            <div class="input-group">
+                <i class="fas fa-file-upload"></i>
+                <input type="file" id="paymentScreenshot" accept="image/*">
+                <div class="upload-box" onclick="document.getElementById('paymentScreenshot').click()">
+                    Click to Upload Screenshot (Max 2MB)
+                </div>
             </div>
         </div>
         
@@ -189,25 +246,20 @@
     const DASHBOARD_URL = "Student_Dashboard.html";
     const LOCAL_STORAGE_KEY = 'registeredEvents';
     const CURRENT_EVENT_KEY = 'currentRegisteringEventId';
+    const EVENT_FEE_KEY = 'currentEventFee';
+    const THEME_KEY = 'themePreference';
 
-    document.getElementById('paymentScreenshot').addEventListener('change', function(e) {
-        const fileName = e.target.files[0] ? e.target.files[0].name : "Click to Upload Screenshot (Max 2MB)";
-        const uploadBox = document.querySelector('.upload-box');
-        uploadBox.innerHTML = `<i class="fas fa-file-upload"></i> ${fileName}`;
-        uploadBox.style.borderColor = "var(--register-green)";
-    });
+    let requiredFee = 0;
+    const htmlElement = document.documentElement;
 
     function handleSubmit() {
-        // FIX 1: Retrieve the ID of the event the user clicked on the dashboard
         const eventId = parseInt(localStorage.getItem(CURRENT_EVENT_KEY));
         const screenshotFile = document.getElementById('paymentScreenshot').files[0];
         
-        if (!screenshotFile) {
-            alert("Please ensure all fields are filled and a payment screenshot is uploaded.");
+        if (requiredFee > 0 && !screenshotFile) {
             return;
         }
 
-        // FIX 2: Update the persistent list of registered IDs
         if (eventId) {
             let registeredIds = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '[]');
             if (!registeredIds.includes(eventId)) {
@@ -216,22 +268,60 @@
             }
         }
         
-        // FIX 3: Clean up the temporary key after successful submission
         localStorage.removeItem(CURRENT_EVENT_KEY);
-
-        alert("Registration submitted successfully! Your status on the dashboard is now 'Registered'.");
+        localStorage.removeItem(EVENT_FEE_KEY);
         
-        // Redirect back to the dashboard
         window.location.href = DASHBOARD_URL;
     }
 
     function handleCancel() {
-        if (confirm("Are you sure you want to cancel and return to the events list?")) {
-            // Clean up the temporary key if the user cancels
-            localStorage.removeItem(CURRENT_EVENT_KEY); 
-            window.location.href = DASHBOARD_URL;
+        localStorage.removeItem(CURRENT_EVENT_KEY); 
+        localStorage.removeItem(EVENT_FEE_KEY);
+        window.location.href = DASHBOARD_URL;
+    }
+    
+    function loadTheme() {
+        const savedTheme = localStorage.getItem(THEME_KEY);
+        if (savedTheme === 'dark') {
+            htmlElement.classList.add('dark-theme');
+        } else {
+            htmlElement.classList.remove('dark-theme');
         }
     }
+
+    document.getElementById('paymentScreenshot').addEventListener('change', function(e) {
+        const fileName = e.target.files[0] ? e.target.files[0].name : "Click to Upload Screenshot (Max 2MB)";
+        const uploadBox = document.querySelector('.upload-box');
+        uploadBox.innerHTML = `<i class="fas fa-file-upload"></i> ${fileName}`;
+        uploadBox.style.borderColor = "var(--register-green)";
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadTheme();
+
+        const fee = localStorage.getItem(EVENT_FEE_KEY);
+        requiredFee = fee ? parseFloat(fee) : 0;
+        const paymentSection = document.getElementById('payment-section');
+        const fileInput = document.getElementById('paymentScreenshot');
+        const instructionBox = document.getElementById('payment-instruction');
+        const screenshotLabel = document.getElementById('screenshot-label');
+
+        if (requiredFee > 0) {
+            fileInput.setAttribute('required', 'required');
+            document.getElementById('fee-display').textContent = `Fee: PKR ${requiredFee.toFixed(2)}`;
+            
+            instructionBox.innerHTML = `(If ticket fee is PKR ${requiredFee.toFixed(2)}, please upload the payment screenshot so you can be sent a ticket.)`;
+            instructionBox.style.display = 'block';
+            
+            screenshotLabel.classList.add('required');
+            paymentSection.style.display = 'block';
+        } else {
+            document.getElementById('fee-display').textContent = 'Fee: FREE';
+            fileInput.removeAttribute('required');
+            screenshotLabel.classList.remove('required');
+            paymentSection.style.display = 'none';
+        }
+    });
 </script>
 
 </body>
