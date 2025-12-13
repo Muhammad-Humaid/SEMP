@@ -5,31 +5,29 @@ const { promisePool } = require('../config/database');
 // Generate JWT Token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE
+    expiresIn: process.env.JWT_EXPIRE || '7d'
   });
 };
 
-// @desc    Register new user
+// @desc    Register user
 // @route   POST /api/auth/register
 // @access  Public
-exports.register = async (req, res) => {
+exports.register = async (req, res, next) => {
   try {
-    const { 
-      email, 
-      password, 
-      role, 
-      fullName, 
-      rollNumber, 
-      phoneNumber, 
-      societyName, 
-      societyId 
-    } = req.body;
+    const { email, password, fullName, role, rollNumber, phoneNumber, societyName, societyId } = req.body;
 
-    // Validate required fields
-    if (!email || !password || !role) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Please provide email, password, and role' 
+    // Validation
+    if (!email || !password || !fullName || !role) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide email, password, full name, and role'
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters'
       });
     }
 
@@ -40,21 +38,21 @@ exports.register = async (req, res) => {
     );
 
     if (existingUser.length > 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'User with this email already exists' 
+      return res.status(400).json({
+        success: false,
+        message: 'Email already registered'
       });
     }
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     // Insert user
     const [result] = await promisePool.query(
-      `INSERT INTO users (email, password_hash, role, full_name, roll_number, phone_number, society_name, society_id) 
+      `INSERT INTO users (email, password_hash, full_name, role, roll_number, phone_number, society_name, society_id) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [email, passwordHash, role, fullName || null, rollNumber || null, phoneNumber || null, societyName || null, societyId || null]
+      [email, hashedPassword, fullName, role, rollNumber || null, phoneNumber || null, societyName || null, societyId || null]
     );
 
     // Generate token
@@ -66,57 +64,53 @@ exports.register = async (req, res) => {
       data: {
         userId: result.insertId,
         email,
+        fullName,
         role,
         token
       }
     });
+
   } catch (error) {
-    console.error('Register Error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error during registration',
-      error: error.message 
-    });
+    console.error('Register error:', error);
+    next(error);
   }
 };
 
 // @desc    Login user
 // @route   POST /api/auth/login
 // @access  Public
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
 
-    // Validate input
-    if (!email || !password || !role) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Please provide email, password, and role' 
+    // Validation
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide email and password'
       });
     }
 
-    // Check for user
-    const [rows] = await promisePool.query(
-      `SELECT user_id, email, password_hash, role, full_name, society_name, is_active 
-       FROM users 
-       WHERE email = ? AND role = ?`,
-      [email, role]
+    // Get user
+    const [users] = await promisePool.query(
+      'SELECT * FROM users WHERE email = ?',
+      [email]
     );
 
-    if (rows.length === 0) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Invalid credentials' 
+    if (users.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
       });
     }
 
-    const user = rows[0];
+    const user = users[0];
 
-    // Check if user is active
+    // Check if active
     if (!user.is_active) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Account is inactive. Please contact administrator.' 
+      return res.status(401).json({
+        success: false,
+        message: 'Account has been deactivated'
       });
     }
 
@@ -124,9 +118,9 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!isMatch) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Invalid credentials' 
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
       });
     }
 
@@ -139,44 +133,91 @@ exports.login = async (req, res) => {
       data: {
         userId: user.user_id,
         email: user.email,
-        role: user.role,
         fullName: user.full_name,
+        role: user.role,
         societyName: user.society_name,
+        societyId: user.society_id,
+        rollNumber: user.roll_number,
         token
       }
     });
+
   } catch (error) {
-    console.error('Login Error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error during login',
-      error: error.message 
-    });
+    console.error('Login error:', error);
+    next(error);
   }
 };
 
-// @desc    Get current logged in user
+// @desc    Get current user
 // @route   GET /api/auth/me
 // @access  Private
-exports.getMe = async (req, res) => {
+exports.getMe = async (req, res, next) => {
   try {
-    const [rows] = await promisePool.query(
-      `SELECT user_id, email, role, full_name, roll_number, phone_number, society_name, society_id, created_at 
-       FROM users 
-       WHERE user_id = ?`,
+    const [users] = await promisePool.query(
+      `SELECT user_id, email, full_name, role, roll_number, phone_number, 
+              society_name, society_id, is_active, created_at 
+       FROM users WHERE user_id = ?`,
       [req.user.user_id]
     );
 
     res.json({
       success: true,
-      data: rows[0],
+      data: users[0]
     });
+
   } catch (error) {
-    console.error('Get Me Error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error',
-      error: error.message 
+    console.error('Get me error:', error);
+    next(error);
+  }
+};
+
+// @desc    Update password
+// @route   PUT /api/auth/updatepassword
+// @access  Private
+exports.updatePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide current and new password'
+      });
+    }
+
+    // Get user with password
+    const [users] = await promisePool.query(
+      'SELECT password_hash FROM users WHERE user_id = ?',
+      [req.user.user_id]
+    );
+
+    // Check current password
+    const isMatch = await bcrypt.compare(currentPassword, users[0].password_hash);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password
+    await promisePool.query(
+      'UPDATE users SET password_hash = ? WHERE user_id = ?',
+      [hashedPassword, req.user.user_id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully'
     });
+
+  } catch (error) {
+    console.error('Update password error:', error);
+    next(error);
   }
 };
